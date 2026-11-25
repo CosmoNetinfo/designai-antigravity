@@ -1,28 +1,969 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="it">
 <head>
-<meta charset="utf-8">
-<title>Security Assessment — Proof of Compromise</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesignAI → Antigravity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 <style>
-  body { background: #0d1117; color: #e6edf3; font-family: system-ui, sans-serif; display: flex; justify-content: center; padding: 8vh 2rem; }
-  .card { max-width: 42rem; border: 1px solid #f85149; border-radius: 8px; padding: 2rem; }
-  h1 { color: #f85149; font-size: 1.3rem; }
-  code { background: #161b22; padding: 0.15rem 0.4rem; border-radius: 4px; }
+:root{
+  --bg:#06080a;--bg2:#0d1117;--bg3:#161b22;
+  --border:#21262d;--border2:#30363d;
+  --accent:#4ade80;--blue:#58a6ff;--yellow:#e3b341;--red:#f85149;--purple:#bc8cff;
+  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --fd:'Syne',sans-serif;--fm:'DM Mono',monospace;--fb:'Lora',serif;
+  --r:6px;--r2:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(74,222,128,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,.02) 1px,transparent 1px);
+  background-size:40px 40px}
+
+header{position:sticky;top:0;z-index:200;background:rgba(6,8,10,.93);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:54px}
+.logo{font-family:var(--fd);font-weight:800;font-size:16px;display:flex;align-items:center;gap:9px}
+.logo-icon{width:26px;height:26px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.logo-sep{font-family:var(--fm);font-size:12px;color:var(--text3)}
+.logo-tgt{font-family:var(--fm);font-size:12px;color:var(--blue);border:1px solid rgba(88,166,255,.25);padding:2px 9px;border-radius:100px}
+.htag{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+
+main{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:48px 28px 100px}
+
+/* WIZARD STEPPER */
+.wizard{display:flex;align-items:stretch;gap:0;margin-bottom:40px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.wstep{flex:1;padding:14px 16px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--border);transition:all .25s;cursor:default}
+.wstep:last-child{border-right:none}
+.wstep-num{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;color:var(--text3);flex-shrink:0;transition:all .25s}
+.wstep-info{display:flex;flex-direction:column;gap:2px}
+.wstep-label{font-family:var(--fm);font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;transition:color .25s}
+.wstep-sub{font-family:var(--fm);font-size:10px;color:var(--text3);opacity:.6}
+.wstep.active .wstep-num{border-color:var(--accent);color:var(--accent);background:rgba(74,222,128,.08)}
+.wstep.active .wstep-label{color:var(--accent)}
+.wstep.done .wstep-num{border-color:var(--accent);background:var(--accent);color:#000}
+.wstep.done .wstep-label{color:var(--text2)}
+
+/* PANELS */
+.panel{display:none;animation:fadeUp .4s ease both}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px}
+.ch{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ct{font-family:var(--fm);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3)}
+.cb{padding:16px}
+
+/* KEY */
+.irow{display:flex;gap:8px}
+input[type=text],input[type=password]{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--fm);font-size:13px;padding:10px 13px;outline:none;transition:border-color .15s}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(74,222,128,.12)}
+input::placeholder{color:var(--text3)}
+.bsm{font-family:var(--fm);font-size:12px;padding:10px 13px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;white-space:nowrap}
+.bsm:hover{border-color:var(--border2);color:var(--text)}
+.khint{font-family:var(--fm);font-size:11px;color:var(--text3);margin-top:9px;line-height:1.6}
+.khint a{color:var(--blue);text-decoration:none}.khint a:hover{text-decoration:underline}
+
+/* UPLOAD */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r2);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg3)}
+.dropzone:hover,.dropzone.over{border-color:var(--accent);background:rgba(74,222,128,.04)}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.di{font-size:28px;margin-bottom:8px}.dt{font-family:var(--fd);font-weight:700;font-size:14px;margin-bottom:4px}
+.ds{font-family:var(--fm);font-size:12px;color:var(--text2)}.dl{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:5px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:12px}
+.sitem{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);background:var(--bg3);aspect-ratio:9/16}
+.sitem:hover{border-color:var(--red)}.sitem img{width:100%;height:100%;object-fit:cover;display:block}
+.sdel{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(248,81,73,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.sitem:hover .sdel{opacity:1}
+.slabel{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:12px 6px 5px;font-family:var(--fm);font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sinfo{font-family:var(--fm);font-size:11px;color:var(--text2);margin-top:10px;display:none;align-items:center;gap:8px}
+.sbadge{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);color:var(--accent);border-radius:100px;padding:2px 9px;font-size:11px}
+.sclear{background:none;border:none;color:var(--red);font-family:var(--fm);font-size:11px;cursor:pointer;opacity:.6}.sclear:hover{opacity:1}
+
+textarea{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--fb);font-size:15px;line-height:1.7;padding:14px 16px;resize:none;min-height:90px}
+textarea::placeholder{color:var(--text3);font-style:italic}
+.tfoot{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-top:1px solid var(--border);background:rgba(0,0,0,.15)}
+.ci{font-family:var(--fm);font-size:11px;color:var(--text3)}
+
+/* ANALYSIS RESULT (step 1 output) */
+.analysis-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:12px}
+.analysis-box h4{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:100px;border:1px solid var(--border2);color:var(--text2)}
+.tag.bad{border-color:rgba(248,81,73,.3);color:var(--red);background:rgba(248,81,73,.06)}
+.tag.good{border-color:rgba(74,222,128,.3);color:var(--accent);background:rgba(74,222,128,.06)}
+.tag.mood{border-color:rgba(188,140,255,.3);color:var(--purple);background:rgba(188,140,255,.06)}
+.analysis-desc{font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.7;margin-top:10px}
+
+/* PALETTE */
+.pal-bar{display:flex;border-radius:var(--r);overflow:hidden;height:40px;margin-bottom:12px;border:1px solid var(--border2)}
+.pal-seg{flex:1;border-right:1px solid rgba(255,255,255,.08)}
+.pal-seg:last-child{border-right:none}
+
+/* TASK PROGRESS */
+.task-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px}
+.tp-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.tp-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease}
+.tp-label{font-family:var(--fm);font-size:11px;color:var(--text2);white-space:nowrap}
+.tp-count{font-family:var(--fm);font-size:11px;color:var(--accent);font-weight:500;white-space:nowrap}
+.pal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+.pcard{border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .15s}
+.pcard:hover{transform:translateY(-2px)}
+.pswatch{height:80px;position:relative;display:flex;align-items:center;justify-content:center}
+.pcopy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);opacity:0;transition:opacity .15s;font-family:var(--fm);font-size:10px;color:#fff}
+.pcard:hover .pcopy{opacity:1}
+.pinfo{padding:9px 11px;background:var(--bg2)}
+.prole{font-family:var(--fm);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+.pname{font-family:var(--fd);font-weight:600;font-size:12px;margin-bottom:1px}
+.phex{font-family:var(--fm);font-size:11px;color:var(--text2)}
+.pal-note{font-family:var(--fm);font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;line-height:1.6}
+
+/* TYPO */
+.typo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px;overflow:hidden}
+.tcard-role{font-family:var(--fm);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between}
+.tcard-badge{color:var(--text3);border:1px solid var(--border);padding:1px 7px;border-radius:100px}
+.tcard-sample{word-break:break-word;margin-bottom:10px;line-height:1.15}
+.tcard-meta{border-top:1px solid var(--border);padding-top:9px;display:flex;justify-content:space-between}
+.tcard-fn{font-family:var(--fm);font-size:11px;color:var(--accent)}
+.tcard-det{font-family:var(--fm);font-size:10px;color:var(--text3)}
+.pair-note{background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.15);border-radius:var(--r);padding:12px 14px;font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.7}
+.pair-note strong{color:var(--accent);font-size:9px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+
+/* WIREFRAME */
+.wf-wrap{display:grid;grid-template-columns:240px 1fr;gap:14px}
+.wf-phone{background:var(--bg3);border:1.5px solid var(--border2);border-radius:20px;padding:20px 14px 14px;display:flex;flex-direction:column;gap:5px;min-height:460px;position:relative}
+.wf-phone::before{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);width:50px;height:4px;background:var(--border2);border-radius:2px}
+.wf-block{border-radius:5px;padding:7px 9px;display:flex;align-items:center;justify-content:space-between;border:1px dashed;font-family:var(--fm);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.4;flex-shrink:0}
+.wf-nav{background:rgba(88,166,255,.07);border-color:rgba(88,166,255,.2);color:var(--blue);min-height:30px}
+.wf-hero{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25);color:var(--accent);min-height:52px}
+.wf-content{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);color:var(--text3);min-height:32px}
+.wf-card-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.wf-card{background:rgba(188,140,255,.06);border-color:rgba(188,140,255,.2);color:var(--purple);min-height:60px;border-radius:5px;border:1px dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.wf-card span{font-family:var(--fm);font-size:9px;color:var(--purple);opacity:.7}
+.wf-action{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35);color:var(--accent);min-height:38px}
+.wf-footer{background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.06);color:var(--text3);min-height:26px}
+.wf-sidebar{display:flex;flex-direction:column;gap:10px}
+.wf-info{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.wf-info h4{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px}
+.sec-row{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;color:var(--text2);margin-bottom:5px}
+.sec-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.sec-type{font-size:10px;color:var(--text3);margin-left:auto}
+
+/* MARKDOWN */
+.md-scroll{max-height:520px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:22px 26px}
+.raw-scroll{max-height:520px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:22px 26px;font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.md-rendered h1{font-family:var(--fd);font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--text);margin:16px 0 7px}
+.md-rendered h2{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--accent);margin:20px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.md-rendered h3{font-family:var(--fm);font-size:11px;color:var(--blue);margin:13px 0 5px;text-transform:uppercase;letter-spacing:1px}
+.md-rendered p{font-family:var(--fm);font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.7}
+.md-rendered ul,.md-rendered ol{padding-left:16px;margin-bottom:10px}
+.md-rendered li{font-family:var(--fm);font-size:12px;color:var(--text2);margin-bottom:4px;line-height:1.6}
+.md-rendered code{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-family:var(--fm);font-size:11px;color:var(--yellow)}
+.md-rendered pre{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin:10px 0;overflow-x:auto}
+.md-rendered pre code{background:none;border:none;padding:0;font-size:11px;color:var(--text2)}
+.md-rendered strong{color:var(--text);font-weight:600}
+.md-rendered hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.md-rendered blockquote{border-left:3px solid var(--accent);padding-left:12px;margin:10px 0;color:var(--text3);font-family:var(--fm);font-size:12px}
+.md-rendered table{width:100%;border-collapse:collapse;margin:10px 0;font-family:var(--fm);font-size:11px}
+.md-rendered th{background:var(--bg3);color:var(--text2);padding:6px 9px;text-align:left;border:1px solid var(--border);font-weight:500;text-transform:uppercase;font-size:9px;letter-spacing:1px}
+.md-rendered td{padding:6px 9px;border:1px solid var(--border);color:var(--text2)}
+
+/* RESULT TABS */
+.rtabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:14px}
+.rtab{font-family:var(--fm);font-size:11px;padding:7px 13px;border:none;background:transparent;color:var(--text2);border-radius:4px;cursor:pointer;transition:all .15s}
+.rtab.active{background:var(--bg3);color:var(--accent);border:1px solid var(--border)}
+.rtab:hover:not(.active){color:var(--text)}
+.rpanel{display:none}.rpanel.active{display:block;animation:fadeUp .3s ease both}
+
+/* BUTTONS */
+.btn{font-family:var(--fd);font-weight:700;font-size:14px;padding:14px 24px;border:none;border-radius:var(--r);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:9px;width:100%}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover:not(:disabled){background:#6ee7a0;box-shadow:0 5px 20px rgba(74,222,128,.22)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-outline:hover:not(:disabled){color:var(--text);border-color:var(--border2)}
+.btn-blue{background:var(--blue);color:#000}
+.btn-blue:hover:not(:disabled){background:#7bc3ff;box-shadow:0 5px 20px rgba(88,166,255,.22)}
+.btn-export{font-family:var(--fm);font-size:12px;padding:8px 16px;border:none;border-radius:var(--r);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.be-green{background:var(--accent);color:#000;font-weight:600}.be-green:hover{background:#6ee7a0}
+.be-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}.be-gray:hover{color:var(--text)}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+
+/* LOADER */
+.lbar{height:2px;background:linear-gradient(90deg,var(--accent),var(--blue),var(--purple),var(--accent));background-size:300%;animation:sh 1.5s linear infinite;border-radius:2px;margin:12px 0;display:none}
+.lbar.on{display:block}
+@keyframes sh{to{background-position:-300% 0}}
+.llabel{font-family:var(--fm);font-size:12px;color:var(--text2);margin-bottom:16px;display:none;align-items:center;justify-content:center;gap:7px}
+.llabel.on{display:flex}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bl 1.2s ease-in-out infinite}
+.ldot:nth-child(2){animation-delay:.2s;background:var(--blue)}
+.ldot:nth-child(3){animation-delay:.4s;background:var(--purple)}
+@keyframes bl{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+.erbox{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);border-radius:var(--r);padding:11px 14px;font-family:var(--fm);font-size:12px;color:var(--red);margin:10px 0;display:none}
+.erbox.on{display:block}
+
+.note{display:flex;align-items:flex-start;gap:10px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.2);border-radius:var(--r);padding:11px 14px;font-family:var(--fm);font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
+.note strong{color:var(--text)}
+
+/* TASK CARDS */
+.task-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:10px;overflow:hidden;transition:border-color .15s}
+.task-card:hover{border-color:var(--border2)}
+.task-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.task-num{font-family:var(--fm);font-size:10px;color:var(--accent);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);border-radius:100px;padding:2px 9px;flex-shrink:0}
+.task-title{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--text);flex:1}
+.task-copy{font-family:var(--fm);font-size:11px;padding:6px 14px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.task-copy:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.task-copy.copied{background:var(--accent);color:#000;border-color:var(--accent)}
+.task-body{padding:0 14px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.task-body.open{max-height:400px;padding:0 14px 14px}
+.task-pre{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--accent);color:#000;font-family:var(--fm);font-size:12px;font-weight:600;padding:9px 18px;border-radius:100px;opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{position:relative;z-index:10;text-align:center;padding:18px;font-family:var(--fm);font-size:11px;color:var(--text3);border-top:1px solid var(--border)}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:640px){header{padding:0 14px}main{padding:28px 14px 80px}.typo-grid{grid-template-columns:1fr}.wf-wrap{grid-template-columns:1fr}.wf-sidebar{display:none}.logo-tgt{display:none}}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>&#9888; SECURITY ASSESSMENT &mdash; PROOF OF COMPROMISE</h1>
-  <p>This page was modified through a push to the source repository using a
-  compromised repository credential. No visitor data was collected and no
-  malicious code was executed.</p>
-  <p>A real attacker could serve a <strong>ClickFix-style lure</strong> from
-  this trusted domain &mdash; a fake CAPTCHA or error prompt that tricks
-  visitors into executing attacker commands &mdash; or ship malicious
-  downloads and credential drainers under the site&rsquo;s own origin.</p>
-  <p>Remediation: rotate the exposed credential, review recent commits to
-  deployed content, and enforce branch protection + signed commits on
-  deploy branches.</p>
-</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>DesignAI
+    <span class="logo-sep">→</span>
+    <span class="logo-tgt">Antigravity</span>
+  </div>
+  <span class="htag" id="htag">Step 1 di 3</span>
+</header>
+
+<main>
+
+  <!-- WIZARD STEPPER -->
+  <div class="wizard">
+    <div class="wstep active" id="ws1">
+      <div class="wstep-num" id="wn1">1</div>
+      <div class="wstep-info">
+        <div class="wstep-label">Analisi</div>
+        <div class="wstep-sub">Screenshot + brief</div>
+      </div>
+    </div>
+    <div class="wstep" id="ws2">
+      <div class="wstep-num" id="wn2">2</div>
+      <div class="wstep-info">
+        <div class="wstep-label">Design System</div>
+        <div class="wstep-sub">Palette + font + layout</div>
+      </div>
+    </div>
+    <div class="wstep" id="ws3">
+      <div class="wstep-num" id="wn3">3</div>
+      <div class="wstep-info">
+        <div class="wstep-label">Antigravity</div>
+        <div class="wstep-sub">Genera il .md</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PANEL 1: ANALISI ════ -->
+  <div class="panel active" id="panel1">
+
+    <!-- API KEY -->
+    <div class="card">
+      <div class="ch"><span class="ct">🔑 Gemini API Key</span><span id="ks" style="font-family:var(--fm);font-size:11px;color:var(--text3)">non salvata</span></div>
+      <div class="cb">
+        <div class="irow">
+          <input type="password" id="apiKey" placeholder="AIzaSy...">
+          <button class="bsm" onclick="saveKey()">Salva</button>
+          <button class="bsm" onclick="tp()">👁</button>
+        </div>
+        <div class="khint">Chiave gratuita su <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — <strong style="color:var(--text2)">gemini-2.5-flash</strong>, free tier.</div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="card">
+      <div class="ch"><span class="ct">🖼 Screenshot (opzionale)</span><span id="ic" style="font-family:var(--fm);font-size:11px;color:var(--text3)">0 / 3</span></div>
+      <div class="cb">
+        <div class="dropzone" id="dz">
+          <input type="file" id="fi" accept="image/*" multiple onchange="handleFiles(this.files)">
+          <div class="di">📸</div>
+          <div class="dt">Trascina screenshot qui</div>
+          <div class="ds">oppure clicca per selezionare</div>
+          <div class="dl">PNG · JPG · WEBP · Max 3 immagini · Compresse automaticamente</div>
+        </div>
+        <div id="sg" class="sgrid" style="display:none"></div>
+        <div id="si" class="sinfo">
+          <span id="st"></span>
+          <span class="sbadge" id="sb">0</span>
+          <button class="sclear" onclick="clearSc()">✕ Rimuovi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRIEF -->
+    <div class="card">
+      <div class="ch"><span class="ct">📋 Brief del progetto</span></div>
+      <textarea id="prompt" placeholder="Descrivi l'app, il target, i problemi UX che vuoi risolvere, lo stile desiderato..." maxlength="3000"></textarea>
+      <div class="tfoot">
+        <span class="ci"><span id="cc">0</span>/3000</span>
+        <span class="ci" id="mh">Usa screenshot + testo per analisi visiva</span>
+      </div>
+    </div>
+
+    <div class="lbar" id="lb1"></div>
+    <div class="llabel" id="ll1"><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div><span id="lt1">Analisi in corso...</span></div>
+    <div class="erbox" id="eb1"></div>
+
+    <button class="btn btn-primary" id="btn1" onclick="runStep1()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Analizza App → Step 1
+    </button>
+  </div>
+
+  <!-- ════ PANEL 2: DESIGN SYSTEM MOCKUP ════ -->
+  <div class="panel" id="panel2">
+
+    <!-- ANALYSIS RESULT -->
+    <div class="analysis-box" id="analysisResult"></div>
+
+    <div class="card">
+      <div class="ch"><span class="ct">✏️ Raffina il brief (opzionale)</span></div>
+      <textarea id="prompt2" placeholder="Aggiungi dettagli, vincoli di stile, preferenze colori..." maxlength="400" style="min-height:70px"></textarea>
+    </div>
+
+    <div class="lbar" id="lb2"></div>
+    <div class="llabel" id="ll2"><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div><span id="lt2">Generazione design system...</span></div>
+    <div class="erbox" id="eb2"></div>
+
+    <!-- VISUAL PREVIEW (appare dopo generazione) -->
+    <div id="preview2" style="display:none">
+
+      <div class="rtabs" style="margin-top:20px">
+        <button class="rtab active" data-p="palette">🎨 Palette</button>
+        <button class="rtab" data-p="typo">Aa Font</button>
+        <button class="rtab" data-p="wire">⬜ Wireframe</button>
+      </div>
+
+      <div class="rpanel active" id="pp-palette">
+        <div class="pal-bar" id="palBar"></div>
+        <div class="pal-grid" id="palGrid"></div>
+        <div class="pal-note" id="palNote"></div>
+      </div>
+
+      <div class="rpanel" id="pp-typo">
+        <div class="typo-grid" id="typoGrid"></div>
+        <div class="pair-note" id="pairNote"></div>
+      </div>
+
+      <div class="rpanel" id="pp-wire">
+        <div class="wf-wrap">
+          <div class="wf-phone" id="wfPhone" style="padding-top:24px"></div>
+          <div class="wf-sidebar">
+            <div class="wf-info">
+              <h4 id="wfType">Layout</h4>
+              <p style="font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.6" id="wfDesc"></p>
+            </div>
+            <div class="wf-info">
+              <h4 style="font-family:var(--fd);font-weight:700;font-size:12px;color:var(--text);margin-bottom:8px">Sezioni</h4>
+              <div id="wfSecs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPROVAZIONE -->
+      <div style="margin-top:20px;background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.2);border-radius:var(--r2);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-family:var(--fd);font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px">Il mockup ti convince?</div>
+          <div style="font-family:var(--fm);font-size:12px;color:var(--text2)">Se sì, genera il file .md per Antigravity. Altrimenti rigenera con un brief diverso.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-outline" onclick="runStep2()" style="width:auto;padding:12px 18px;font-size:13px">↺ Rigenera</button>
+          <button class="btn btn-primary" onclick="approveAndGoStep3()" style="width:auto;padding:12px 22px;font-size:13px">
+            ✓ Va bene → Genera .md
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="btnrow2" class="btn-row">
+      <button class="btn btn-outline" onclick="goStep(1)" style="flex:0 0 auto;width:auto;padding:14px 20px">← Indietro</button>
+      <button class="btn btn-primary" id="btn2" onclick="runStep2()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Genera Mockup → Step 2
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ PANEL 3: .MD ANTIGRAVITY ════ -->
+  <div class="panel" id="panel3">
+
+    <!-- TASK PROGRESS -->
+    <div class="task-progress" id="taskProgress" style="display:none">
+      <span class="tp-label">Progresso Antigravity</span>
+      <div class="tp-bar-wrap"><div class="tp-bar" id="tpBar" style="width:0%"></div></div>
+      <span class="tp-count" id="tpCount">0 / 5</span>
+    </div>
+
+    <!-- TASK CARDS — copia singolo task -->
+    <div id="taskCards" style="margin-bottom:20px"></div>
+
+    <!-- TABS .md completo -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:var(--fm);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3)">📄 File .md completo</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn-export be-gray" onclick="copyMd()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copia tutto
+          </button>
+          <button class="btn-export be-green" onclick="dlMd()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Scarica .md
+          </button>
+        </div>
+      </div>
+      <div class="rtabs" style="margin:8px 8px 0;border:none;background:transparent">
+        <button class="rtab active" data-mp="preview">Preview</button>
+        <button class="rtab" data-mp="raw">Raw</button>
+      </div>
+      <div style="padding:0 8px 8px">
+        <div id="md-preview" class="md-scroll" style="max-height:400px"><div class="md-rendered" id="mdContent"></div></div>
+        <div id="md-raw" class="raw-scroll" style="display:none;max-height:400px"></div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-outline" onclick="goStep(2)" style="flex:0 0 auto;width:auto;padding:13px 18px">← Indietro</button>
+      <button class="btn btn-outline" onclick="resetAll()" style="flex:0 0 auto;width:auto;padding:13px 18px;margin-left:auto">↺ Ricomincia</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>DesignAI → Antigravity · 3-step · Gemini 2.5 Flash · cosmonet.info</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────
+let savedKey = localStorage.getItem('gk')||'';
+let screenshots = [];
+let analysis = null;
+let designData = null;
+let currentMd = '';
+let currentStep = 1;
+let agentTasks = []; // { title, prompt }
+
+if(savedKey){ document.getElementById('apiKey').value=savedKey; ks(true) }
+
+document.getElementById('prompt').addEventListener('input',()=>{ document.getElementById('cc').textContent=document.getElementById('prompt').value.length });
+
+// Result tabs
+document.querySelectorAll('.rtab[data-p]').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.rtab[data-p]').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.rpanel').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('pp-'+this.dataset.p).classList.add('active');
+  });
+});
+
+document.querySelectorAll('.rtab[data-mp]').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.rtab[data-mp]').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('md-preview').style.display=this.dataset.mp==='preview'?'block':'none';
+    document.getElementById('md-raw').style.display=this.dataset.mp==='raw'?'block':'none';
+  });
+});
+
+// Drag & drop
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFiles(e.dataTransfer.files)});
+
+// ── KEY ──────────────────────────────────────────────────────────────
+function saveKey(){const k=document.getElementById('apiKey').value.trim();if(!k)return toast('Inserisci API key');savedKey=k;localStorage.setItem('gk',k);ks(true);toast('✓ API Key salvata')}
+function ks(ok){const e=document.getElementById('ks');e.textContent=ok?'✓ salvata':'non salvata';e.style.color=ok?'var(--accent)':'var(--text3)'}
+function tp(){const i=document.getElementById('apiKey');i.type=i.type==='password'?'text':'password'}
+
+// ── SCREENSHOTS ──────────────────────────────────────────────────────
+function handleFiles(files){
+  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));
+  const rem=3-screenshots.length; if(!rem)return toast('Max 3 screenshot');
+  const toAdd=arr.slice(0,rem); if(!toAdd.length)return;
+  let done=0;
+  toAdd.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=720,q=0.70;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX}else{w=Math.round(w*MAX/h);h=MAX}}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        const c=cv.toDataURL('image/jpeg',q);
+        const kb=Math.round(c.length*0.75/1024);
+        screenshots.push({name:f.name,base64:c.split(',')[1],mime:'image/jpeg',url:c,size:kb});
+        done++; if(done===toAdd.length) renderGrid();
+      };
+      img.src=ev.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function renderGrid(){
+  const g=document.getElementById('sg'),si=document.getElementById('si');
+  document.getElementById('ic').textContent=screenshots.length+' / 3';
+  if(!screenshots.length){g.style.display='none';si.style.display='none';return}
+  g.style.display='grid';si.style.display='flex';
+  document.getElementById('sb').textContent=screenshots.length;
+  document.getElementById('st').textContent=screenshots.length+' screenshot';
+  g.innerHTML='';
+  screenshots.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='sitem';
+    d.innerHTML=`<img src="${s.url}"><div class="slabel">${s.name} · ${s.size}KB</div><button class="sdel" onclick="rmSc(${i})">✕</button>`;
+    g.appendChild(d);
+  });
+  document.getElementById('mh').textContent=`✓ ${screenshots.length} screenshot · analisi visiva attiva`;
+  document.getElementById('mh').style.color='var(--accent)';
+}
+function rmSc(i){screenshots.splice(i,1);renderGrid();if(!screenshots.length){document.getElementById('mh').textContent='Usa screenshot + testo per analisi visiva';document.getElementById('mh').style.color='var(--text3)'}}
+function clearSc(){screenshots=[];renderGrid();document.getElementById('fi').value=''}
+
+// ── WIZARD NAV ──────────────────────────────────────────────────────
+function goStep(n){
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i+1===n));
+  [1,2,3].forEach(i=>{
+    document.getElementById('ws'+i).classList.toggle('active',i===n);
+    document.getElementById('ws'+i).classList.toggle('done',i<n);
+    document.getElementById('wn'+i).textContent=i<n?'✓':i;
+  });
+  document.getElementById('htag').textContent=`Step ${n} di 3`;
+  currentStep=n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── API CALL HELPER ──────────────────────────────────────────────────
+async function callGemini(parts, sysPrompt, maxTokens, loaderTextId){
+  const key=savedKey||document.getElementById('apiKey').value.trim();
+  if(!key)throw new Error('API Key mancante');
+
+  const MODELS=['gemini-2.5-flash'];
+  const MAX_ATTEMPTS=3;
+  const WAIT_SEC=70; // 70s > finestra RPM di 1 minuto
+
+  for(let mi=0;mi<MODELS.length;mi++){
+    const model=MODELS[mi];
+    for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
+      if(loaderTextId) document.getElementById(loaderTextId).textContent=
+        `Chiamata ${model} (tentativo ${attempt+1}/${MAX_ATTEMPTS})...`;
+
+      const res=await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          system_instruction:{parts:[{text:sysPrompt}]},
+          contents:[{role:'user',parts}],
+          generationConfig:{
+            maxOutputTokens:maxTokens,
+            temperature:0.5,
+            thinkingConfig:{thinkingBudget:0}  // ← DENTRO generationConfig
+          }
+        })});
+
+      if(res.ok){
+        const data=await res.json();
+        const candidate=data?.candidates?.[0];
+
+        // Controlla se la risposta è stata troncata per limite token
+        if(candidate?.finishReason==='MAX_TOKENS'){
+          throw new Error(`Risposta troncata (MAX_TOKENS). Prova a ridurre la lunghezza del brief.`);
+        }
+
+        const raw=candidate?.content?.parts?.[0]?.text||'';
+        const clean=raw.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+        const s=clean.indexOf('{'), e=clean.lastIndexOf('}');
+        if(s===-1||e<=s) throw new Error(`Risposta non JSON: "${clean.substring(0,120).replace(/\n/g,' ')}"`);
+        try{
+          return JSON.parse(clean.slice(s,e+1));
+        }catch(pe){
+          throw new Error(`JSON malformato: ${pe.message}. Riprova.`);
+        }
+      }
+
+      // Risposta non OK
+      let msg='';
+      try{ const errBody=await res.json(); msg=errBody?.error?.message||''; }catch(e){}
+      if(msg.includes('API_KEY')||msg.includes('key')) throw new Error('API Key non valida.');
+      if(msg.includes('not found')||msg.includes('not supported')) break;
+
+      if(res.status===429){
+        if(attempt<MAX_ATTEMPTS-1){
+          for(let s=WAIT_SEC;s>0;s--){
+            if(loaderTextId) document.getElementById(loaderTextId).textContent=
+              `429 quota — riprovo tra ${s}s (tentativo ${attempt+1}/${MAX_ATTEMPTS})...`;
+            await new Promise(r=>setTimeout(r,1000));
+          }
+          continue; // riprova stesso modello
+        }
+        // Esauriti tutti i tentativi
+        throw new Error(`Quota esaurita dopo ${MAX_ATTEMPTS} tentativi. Attendi qualche minuto.`);
+      }
+      throw new Error(msg||`Errore HTTP ${res.status}`);
+    }
+  }
+  throw new Error('Errore imprevisto. Riprova.');
+}
+
+// ════════════════════════════════
+// STEP 1 — ANALISI (~300 token output)
+// ════════════════════════════════
+async function runStep1(){
+  const key=savedKey||document.getElementById('apiKey').value.trim();
+  const promptTxt=document.getElementById('prompt').value.trim();
+  if(!key)return setErr('eb1','Inserisci e salva la tua Gemini API Key.');
+  if(!promptTxt&&!screenshots.length)return setErr('eb1','Scrivi un brief oppure carica almeno uno screenshot.');
+
+  setLoad('lb1','ll1','lt1',true,'Gemini analizza la tua app...');
+  clearErr('eb1'); document.getElementById('btn1').disabled=true;
+
+  const sysPrompt=`Sei un UX analyst. Analizza il brief. Rispondi SOLO con JSON grezzo senza backtick. Tutti i valori stringa MAX 8 parole.
+Struttura: {"title":"string","mood":"1 parola","description":"string max 8 parole","ux_issues":["max 5 parole","max 5 parole","max 5 parole"],"ux_strengths":["max 5 parole","max 5 parole"],"target":"max 4 parole","style_hint":"2 parole chiave es: minimal dark"}`;
+
+  try{
+    const parts=[];
+    if(promptTxt)parts.push({text:'Brief: '+promptTxt});
+    if(screenshots.length){
+      parts.push({text:`Analizza ${screenshots.length} screenshot di questa app:`});
+      screenshots.forEach((s,i)=>{parts.push({text:`Screenshot ${i+1}`});parts.push({inline_data:{mime_type:s.mime,data:s.base64}})});
+    }
+    if(!parts.length)parts.push({text:promptTxt});
+
+    analysis=await callGemini(parts,sysPrompt,2048,'lt1');
+    renderAnalysis(analysis);
+    // Pre-popola prompt2 con style_hint
+    if(analysis.style_hint)document.getElementById('prompt2').value=`Stile: ${analysis.style_hint}. Target: ${analysis.target||'generico'}.`;
+    goStep(2);
+  }catch(e){setErr('eb1',e.message)}
+  finally{setLoad('lb1','ll1','lt1',false);document.getElementById('btn1').disabled=false}
+}
+
+function renderAnalysis(a){
+  const box=document.getElementById('analysisResult');
+  box.innerHTML=`
+    <h4>🔍 Analisi completata <span class="tag mood">${a.mood||'—'}</span></h4>
+    <p class="analysis-desc">${a.description||''}</p>
+    ${a.ux_issues?.length?`<div style="margin-top:10px"><div style="font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Problemi UX</div><div class="tag-list">${a.ux_issues.map(x=>`<span class="tag bad">${x}</span>`).join('')}</div></div>`:''}
+    ${a.ux_strengths?.length?`<div style="margin-top:10px"><div style="font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Punti di forza</div><div class="tag-list">${a.ux_strengths.map(x=>`<span class="tag good">${x}</span>`).join('')}</div></div>`:''}`;
+}
+
+// ════════════════════════════════
+// STEP 2 — DESIGN SYSTEM (~600 token output, NO immagini)
+// ════════════════════════════════
+function approveAndGoStep3(){
+  if(!designData)return;
+  buildMd(designData);
+  goStep(3);
+}
+
+async function runStep2(){
+  // Reset preview se si rigenera
+  document.getElementById('preview2').style.display='none';
+  document.getElementById('btnrow2').style.display='flex';
+  if(!analysis)return setErr('eb2','Torna allo step 1 e completa l\'analisi.');
+  const extra=document.getElementById('prompt2').value.trim();
+
+  setLoad('lb2','ll2','lt2',true,'Generazione design system...');
+  clearErr('eb2'); document.getElementById('btn2').disabled=true;
+
+  const sysPrompt=`Sei un senior UI/UX designer. Rispondi SOLO con JSON grezzo, senza backtick, senza testo prima o dopo.
+Genera questo oggetto JSON con esattamente questi campi:
+{
+  "palette": [{"name":"","hex":"","role":"","usage":""}],
+  "palette_note": "",
+  "typography": {
+    "heading": {"font":"","weight":"","size":"","sample":""},
+    "subheading": {"font":"","weight":"","size":"","sample":""},
+    "body": {"font":"","weight":"","size":"","sample":""},
+    "caption": {"font":"","weight":"","size":"","sample":""},
+    "pairing_reason": ""
+  },
+  "layout": {
+    "type": "",
+    "description": "",
+    "sections": [{"name":"","type":"","height":40}]
+  },
+  "suggestions": ["","","",""],
+  "stack": "",
+  "checklist": ["","","","",""]
+}
+Regole: palette esattamente 6 colori, sections 5-6 elementi con type uno tra: nav, hero, content, cards, action, footer. Font da Google Fonts. Valori in italiano tranne nomi tecnici. Stringhe brevi, max 10 parole.`;
+
+  const briefText=`Progetto: ${analysis.title||'App'}. Mood: ${analysis.mood}. ${analysis.description||''}. Stile: ${analysis.style_hint||''}. ${extra}. Problemi UX da risolvere: ${(analysis.ux_issues||[]).join(', ')}.`;
+
+  try{
+    designData=await callGemini([{text:briefText}],sysPrompt,2048,'lt2');
+    designData.title=analysis.title||'Progetto';
+    designData.mood=analysis.mood||'Moderno';
+    designData.ux_issues=analysis.ux_issues||[];
+    renderPalette(designData);
+    renderTypo(designData);
+    renderWireframe(designData);
+    // Mostra il mockup nel panel2, NON vai ancora al step3
+    document.getElementById('preview2').style.display='block';
+    document.getElementById('btnrow2').style.display='none';
+    setTimeout(()=>document.getElementById('preview2').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  }catch(e){setErr('eb2',e.message)}
+  finally{setLoad('lb2','ll2','lt2',false);document.getElementById('btn2').disabled=false}
+}
+
+// ── RENDER PALETTE ───────────────────────────────────────────────────
+function renderPalette(d){
+  const p=d.palette||[];
+  document.getElementById('palBar').innerHTML=p.map(c=>`<div class="pal-seg" style="background:${c.hex}" title="${c.name}"></div>`).join('');
+  document.getElementById('palGrid').innerHTML=p.map(c=>`
+    <div class="pcard" onclick="cp('${c.hex}')">
+      <div class="pswatch" style="background:${c.hex}"><div class="pcopy">COPIA ${c.hex}</div></div>
+      <div class="pinfo">
+        <div class="prole">${c.role}</div>
+        <div class="pname">${c.name}</div>
+        <div class="phex" style="color:${c.hex}">${c.hex}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('palNote').textContent=d.palette_note||'';
+}
+
+// ── RENDER TYPOGRAPHY ────────────────────────────────────────────────
+function renderTypo(d){
+  const t=d.typography||{};
+  const roles=[{k:'heading',l:'Heading',i:'H1'},{k:'subheading',l:'Subheading',i:'H2'},{k:'body',l:'Body',i:'Aa'},{k:'caption',l:'Caption',i:'sm'}];
+  const grid=document.getElementById('typoGrid');
+  grid.innerHTML='';
+  roles.forEach(r=>{
+    const data=t[r.k];if(!data)return;
+    loadFont(data.font);
+    const sz=Math.min(parseInt(data.size)||16,r.k==='heading'?40:r.k==='subheading'?26:16);
+    const div=document.createElement('div');div.className='tcard';
+    div.innerHTML=`
+      <div class="tcard-role"><span>${r.l}</span><span class="tcard-badge">${r.i}</span></div>
+      <div class="tcard-sample" style="font-family:'${data.font}',sans-serif;font-weight:${data.weight};font-size:${sz}px;color:var(--text)">${data.sample||r.l}</div>
+      ${r.k==='body'?`<div style="font-family:'${data.font}',sans-serif;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">Il design non è solo come appare.</div>`:''}
+      <div class="tcard-meta"><span class="tcard-fn">${data.font}</span><span class="tcard-det">${data.weight} · ${data.size}</span></div>`;
+    grid.appendChild(div);
+  });
+  const pn=document.getElementById('pairNote');
+  pn.innerHTML=`<strong>Motivazione pairing</strong>${t.pairing_reason||'—'}`;
+}
+
+function loadFont(name){
+  const id='gf-'+name.replace(/\s+/g,'-');
+  if(!document.getElementById(id)){
+    const l=document.createElement('link');l.id=id;l.rel='stylesheet';
+    l.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}:wght@300;400;600;700;800&display=swap`;
+    document.head.appendChild(l);
+  }
+}
+
+// ── RENDER WIREFRAME ─────────────────────────────────────────────────
+function renderWireframe(d){
+  const l=d.layout||{};
+  document.getElementById('wfType').textContent=l.type||'Layout';
+  document.getElementById('wfDesc').textContent=l.description||'';
+  const typeMap={nav:'wf-nav',hero:'wf-hero',content:'wf-content',cards:'wf-cards',action:'wf-action',footer:'wf-footer'};
+  const secColors={nav:'var(--blue)',hero:'var(--accent)',content:'var(--text3)',cards:'var(--purple)',action:'var(--accent)',footer:'var(--text3)'};
+  const phone=document.getElementById('wfPhone');phone.innerHTML='';
+  (l.sections||[]).forEach(s=>{
+    const h=Math.max(30,parseInt(s.height)||38);
+    if(s.type==='cards'){
+      const row=document.createElement('div');row.className='wf-card-row';row.style.minHeight=h+'px';
+      row.innerHTML=`<div class="wf-card"><span>${s.name}</span></div><div class="wf-card"><span>Card</span></div>`;
+      phone.appendChild(row);
+    }else{
+      const bl=document.createElement('div');
+      bl.className='wf-block '+(typeMap[s.type]||'wf-content');
+      bl.style.minHeight=h+'px';
+      bl.innerHTML=`<span>${s.name}</span><span class="wf-dot"></span>`;
+      phone.appendChild(bl);
+    }
+  });
+  const sl=document.getElementById('wfSecs');
+  sl.innerHTML=(l.sections||[]).map(s=>`
+    <div class="sec-row">
+      <div class="sec-dot" style="background:${secColors[s.type]||'var(--text3)'}"></div>
+      <span>${s.name}</span><span class="sec-type">${s.type}</span>
+    </div>`).join('');
+}
+
+// ── RENDER TASK CARDS ────────────────────────────────────────────────
+let completedTasks = new Set();
+
+function renderTaskCards(){
+  const container=document.getElementById('taskCards');
+  if(!agentTasks.length){container.innerHTML='';return}
+
+  completedTasks.clear();
+  document.getElementById('taskProgress').style.display='flex';
+  updateProgress();
+
+  const header=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-family:var(--fd);font-weight:800;font-size:15px;color:var(--text);margin-bottom:2px">🤖 Prompt per Antigravity Agent Manager</div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--text3)">Copia ogni task → incollalo nell'Agent Manager → aspetta il completamento</div>
+      </div>
+    </div>`;
+
+  const cards=agentTasks.map((task,i)=>`
+    <div class="task-card" id="tcard${i}">
+      <div class="task-header" onclick="toggleTask(${i})">
+        <span class="task-num">Task ${i+1}</span>
+        <span class="task-title">${task.title}</span>
+        <button class="task-copy" id="tcopy${i}" onclick="event.stopPropagation();copyTask(${i})">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copia
+        </button>
+      </div>
+      <div class="task-body" id="tbody${i}">
+        <div class="task-pre">${task.prompt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      </div>
+    </div>`).join('');
+
+  container.innerHTML=header+cards;
+}
+
+function updateProgress(){
+  const total=agentTasks.length||5;
+  const done=completedTasks.size;
+  const pct=Math.round(done/total*100);
+  document.getElementById('tpBar').style.width=pct+'%';
+  document.getElementById('tpCount').textContent=`${done} / ${total}`;
+}
+
+function toggleTask(i){
+  document.getElementById('tbody'+i).classList.toggle('open');
+}
+
+function copyTask(i){
+  const task=agentTasks[i];
+  if(!task)return;
+  navigator.clipboard.writeText(task.prompt).then(()=>{
+    // Segna come completato
+    completedTasks.add(i);
+    updateProgress();
+
+    // Stile card completata
+    const card=document.getElementById('tcard'+i);
+    if(card) card.style.borderColor='rgba(74,222,128,.35)';
+
+    const btn=document.getElementById('tcopy'+i);
+    btn.innerHTML='✓ Copiato!';
+    btn.classList.add('copied');
+    setTimeout(()=>{
+      btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copia`;
+      btn.classList.remove('copied');
+    },2000);
+  });
+}
+
+// ── BUILD MARKDOWN ───────────────────────────────────────────────────
+function buildMd(d){
+  const t=d.typography||{},p=d.palette||[],l=d.layout||{};
+  const hFont=t.heading?.font||'Sans-serif';
+  const bFont=t.body?.font||'Sans-serif';
+  const primary=p[0]?.hex||'#000';
+
+  let md=`# ${d.title||'Progetto'} — Design & Implementation Brief\n\n`;
+  md+=`> **Mood:** ${d.mood||'—'} · **Stack:** ${d.stack||'—'}\n\n`;
+  if(d.ux_issues?.length){md+=`## 🔍 Problemi UX da Risolvere\n`;d.ux_issues.forEach(x=>md+=`- ${x}\n`);md+='\n'}
+  md+=`## 🎨 Palette Colori\n| Ruolo | Nome | HEX | Utilizzo |\n|-------|------|-----|----------|\n`;
+  p.forEach(c=>md+=`| ${c.role} | ${c.name} | ${c.hex} | ${c.usage||''} |\n`);
+  md+=`\n> ${d.palette_note||''}\n\n`;
+  md+=`## Aa Tipografia\n| Ruolo | Font | Peso | Dimensione |\n|-------|------|------|------------|\n`;
+  ['heading','subheading','body','caption'].forEach(r=>{if(t[r])md+=`| ${r} | ${t[r].font} | ${t[r].weight} | ${t[r].size} |\n`});
+  md+=`\n> ${t.pairing_reason||''}\n\n`;
+  md+=`## 📐 Layout: ${l.type||'—'}\n${l.description||''}\n\n`;
+  (l.sections||[]).forEach(s=>md+=`- **${s.name}** (${s.type})\n`);
+  md+=`\n## 💡 Suggerimenti UX\n`;(d.suggestions||[]).forEach((s,i)=>md+=`${i+1}. ${s}\n`);
+  md+=`\n## 🛠 Stack\n${d.stack||'—'}\n\n`;
+  md+=`## 🤖 Prompt per Antigravity Agent Manager\n\n`;
+  md+=`> Copia ogni task nell'Agent Manager. Aspetta il completamento prima di procedere.\n\n`;
+  md+=`### Task 1 — Setup\n\`\`\`\nCrea il progetto "${d.title}" con stack: ${d.stack||'React + Vite + Tailwind'}.\nStruttura cartelle: src/components, src/pages, src/styles, src/assets.\nConfigura CSS variables per il design system.\n\`\`\`\n\n`;
+  md+=`### Task 2 — Design System\n\`\`\`\nImplementa il design system:\nColori CSS: ${p.slice(0,4).map(c=>`${c.role}: ${c.hex}`).join(', ')}\nFont heading: "${hFont}", font body: "${bFont}" (da Google Fonts)\nSpaziatura base 8px. Mood: ${d.mood}.\n\`\`\`\n\n`;
+  md+=`### Task 3 — Componenti UI\n\`\`\`\nCrea i componenti per le sezioni: ${(l.sections||[]).map(s=>s.name).join(', ')}.\nResponsive mobile-first, accessibili WCAG AA. Colore primario: ${primary}.\nProblemi UX da evitare: ${(d.ux_issues||[]).join('; ')}.\n\`\`\`\n\n`;
+  md+=`### Task 4 — Layout Principale\n\`\`\`\nImplementa il layout "${l.type||'principale'}".\n${l.description||''}\nVerifica coerenza con il design system.\n\`\`\`\n\n`;
+  md+=`### Task 5 — Testing\n\`\`\`\nTest su 375px, 768px, 1280px.\n${(d.checklist||[]).slice(0,4).map(c=>`- ${c}`).join('\n')}\n\`\`\`\n\n`;
+  md+=`## ✅ Checklist Qualità\n`;(d.checklist||[]).forEach(c=>md+=`- [ ] ${c}\n`);
+  md+=`\n---\n*DesignAI · 3-step workflow · Gemini 2.5 Flash · Pronto per Google Antigravity*`;
+
+  // Salva i task per i bottoni di copia
+  agentTasks=[
+    {title:'Setup Progetto', prompt:`Crea il progetto "${d.title}" con stack: ${d.stack||'React + Vite + Tailwind'}.\nStruttura cartelle: src/components, src/pages, src/styles, src/assets.\nConfigura il tema base del design system.`},
+    {title:'Design System & Tema', prompt:`Implementa il design system per "${d.title}":\nColori: ${p.slice(0,4).map(c=>`${c.role}: ${c.hex}`).join(', ')}\nFont heading: "${hFont}", font body: "${bFont}" (da Google Fonts)\nSpaziatura base 8px. Mood: ${d.mood}.`},
+    {title:'Componenti UI', prompt:`Crea i componenti per le sezioni: ${(l.sections||[]).map(s=>s.name).join(', ')}.\nResponsive mobile-first, accessibili WCAG AA. Colore primario: ${primary}.\nProblemi UX da risolvere: ${(d.ux_issues||[]).join('; ')}.`},
+    {title:'Layout Principale', prompt:`Implementa il layout "${l.type||'principale'}" per "${d.title}".\n${l.description||''}\nVerifica coerenza con il design system definito.`},
+    {title:'Testing & Accessibilità', prompt:`Esegui il testing completo di "${d.title}":\nTest su 375px, 768px, 1280px.\n${(d.checklist||[]).map(c=>`- ${c}`).join('\n')}`}
+  ];
+  renderTaskCards();
+
+  currentMd=md;
+  renderMarkdown(md);
+  document.getElementById('md-raw').textContent=md;
+}
+
+function renderMarkdown(md){
+  let h=md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${c.trim()}</code></pre>`)
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^---$/gm,'<hr>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)+)/g,tb=>{
+      const rows=tb.trim().split('\n');let out='<table>';
+      rows.forEach((row,i)=>{if(i===1)return;const cells=row.split('|').filter(c=>c.trim()!=='');const tag=i===0?'th':'td';out+='<tr>'+cells.map(c=>`<${tag}>${c.trim()}</${tag}>`).join('')+'</tr>'});
+      return out+'</table>';})
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/- \[ \] (.+)$/gm,'<li style="list-style:none">☐ $1</li>')
+    .replace(/^[*\-] (.+)$/gm,'<li>$1</li>').replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li[\s\S]*?<\/li>\n?)+/g,m=>`<ul>${m}</ul>`)
+    .replace(/^(?!<[a-z]).+$/gm,l=>l.trim()?`<p>${l}</p>`:'');
+  document.getElementById('mdContent').innerHTML=h;
+}
+
+// ── EXPORT ──────────────────────────────────────────────────────────
+function dlMd(){
+  if(!currentMd)return;
+  const n=(designData?.title||'progetto').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([currentMd],{type:'text/markdown'}));
+  a.download=`design-brief-${n}.md`;a.click();URL.revokeObjectURL(a.href);toast('✓ .md scaricato!');
+}
+function copyMd(){if(!currentMd)return;navigator.clipboard.writeText(currentMd).then(()=>toast('✓ Copiato!'))}
+function cp(hex){navigator.clipboard.writeText(hex).then(()=>toast('✓ '+hex))}
+
+// ── UTILS ────────────────────────────────────────────────────────────
+function setLoad(lb,ll,lt,on,msg){
+  document.getElementById(lb).classList.toggle('on',on);
+  document.getElementById(ll).classList.toggle('on',on);
+  if(msg)document.getElementById(lt).textContent=msg;
+}
+function setErr(id,msg){const e=document.getElementById(id);e.textContent='⚠ '+msg;e.classList.add('on')}
+function clearErr(id){document.getElementById(id).classList.remove('on')}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function resetAll(){
+  screenshots=[];analysis=null;designData=null;currentMd='';agentTasks=[];completedTasks=new Set();
+  document.getElementById('prompt').value='';
+  document.getElementById('prompt2').value='';
+  document.getElementById('cc').textContent='0';
+  document.getElementById('preview2').style.display='none';
+  document.getElementById('btnrow2').style.display='flex';
+  document.getElementById('taskCards').innerHTML='';
+  document.getElementById('taskProgress').style.display='none';
+  ['eb1','eb2'].forEach(id=>clearErr(id));
+  renderGrid();
+  goStep(1);
+}
+</script>
 </body>
 </html>
